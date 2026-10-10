@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Suresh Bike Mechanics - Mobile App</title>
+    <!-- Google Fonts for Clean Mobile Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="bike_shop.css">
+</head>
+<body>
+
+    <!-- TOP MOBILE APP BAR -->
+    <header class="app-bar">
+        <div class="brand-mobile">
+            <div class="brand-icon">🏍️</div>
+            <div class="brand-text">
+                <h1>Suresh Bike Mechanics</h1>
+                <p>Service Management</p>
+            </div>
+        </div>
+        <button class="theme-btn" onclick="toggleMobileTheme()">
+            <span id="themeEmoji">⚫</span> <span id="themeTitle">Black</span>
+        </button>
+    </header>
+
+    <!-- MAIN APP CONTENT -->
+    <main class="app-body">
+
+        <!-- ================= 1. ENTER BIKE DETAILS (BUTTON 1) ================= -->
+        <section id="screenForm" class="view-screen active">
+            <div class="mobile-card">
+                <div class="section-header">
+                    <h2 id="formTitle">Enter Bike Details</h2>
+                    <span id="editIndicator" class="plate-box hidden" style="font-size:0.75rem;">EDIT MODE</span>
+                </div>
+
+                <form id="mobileBikeForm" onsubmit="saveMobileEntry(event)">
+                    <input type="hidden" id="entryRecordId">
+
+                    <!-- Bike Number -->
+                    <div class="form-group">
+                        <label class="form-label">Bike Number <span class="req">*</span></label>
+                        <input type="text" id="mBikeNo" class="mobile-input plate-input" placeholder="AP39 AB 1234" required autocapitalize="characters" autocomplete="off">
+                    </div>
+
+                    <!-- Customer Name -->
+                    <div class="form-group">
+                        <label class="form-label">Customer Name <span class="req">*</span></label>
+                        <input type="text" id="mCustName" class="mobile-input" placeholder="Customer Name" required>
+                    </div>
+
+                    <!-- Customer Phone Number -->
+                    <div class="form-group">
+                        <label class="form-label">Phone Number <span class="req">*</span></label>
+                        <input type="tel" id="mCustPhone" class="mobile-input" placeholder="Mobile Number" required inputmode="tel">
+                    </div>
+
+                    <!-- Bike Model / Brand -->
+                    <div class="form-group">
+                        <label class="form-label">Bike Model</label>
+                        <input type="text" id="mBikeModel" class="mobile-input" placeholder="e.g. Hero Splendor, Activa">
+                    </div>
+
+                    <!-- Service Amount & Advance Amount -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label class="form-label">Total Amount (₹)</label>
+                            <input type="number" id="mAmount" class="mobile-input" placeholder="Total (₹)" min="0" inputmode="numeric" oninput="calcFormBalance()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Advance (₹)</label>
+                            <input type="number" id="mAdvance" class="mobile-input" placeholder="Advance (₹)" min="0" inputmode="numeric" oninput="calcFormBalance()">
+                        </div>
+                    </div>
+                    <div id="mBalanceDisplay" style="font-size:0.85rem; font-weight:700; margin-top:-8px; margin-bottom:14px; color:var(--primary); display:none;"></div>
+
+                    <!-- Payment Status Segmented Control -->
+                    <div class="form-group">
+                        <label class="form-label">Payment Status</label>
+                        <div class="segmented-control">
+                            <button type="button" class="segment-btn active-paid" id="btnPaidSeg" onclick="pickPayment('Paid')">
+                                ✓ Paid
+                            </button>
+                            <button type="button" class="segment-btn" id="btnPendingSeg" onclick="pickPayment('Pending')">
+                                ⏳ Pending
+                            </button>
+                        </div>
+                        <input type="hidden" id="mPaymentStatus" value="Paid">
+                    </div>
+
+                    <!-- Work Done -->
+                    <div class="form-group">
+                        <label class="form-label">Work Description</label>
+                        <textarea id="mWorkDesc" class="mobile-input" rows="2" placeholder="e.g. Oil change, chain tight, brakes fix..."></textarea>
+                    </div>
+
+                    <!-- Save & Cancel Buttons -->
+                    <button type="submit" class="btn-full-save" id="btnSubmitMobile">
+                        💾 Save Details
+                    </button>
+                    <button type="button" class="btn-cancel-edit hidden" id="btnCancelEditMobile" onclick="cancelMobileEdit()">
+                        Cancel Edit
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= 2. VIEW DETAILS (BUTTON 2) ================= -->
+        <section id="screenRecords" class="view-screen">
+            
+            <!-- Quick Mini Stats Strip -->
+            <div class="stats-grid-mobile">
+                <div class="mini-stat-card">
+                    <div class="val" id="miniTotalBikes">0</div>
+                    <div class="lbl">Total Bikes</div>
+                </div>
+                <div class="mini-stat-card">
+                    <div class="val" id="miniPaidBikes">0</div>
+                    <div class="lbl">Paid</div>
+                </div>
+                <div class="mini-stat-card">
+                    <div class="val" id="miniPendingBikes">0</div>
+                    <div class="lbl">Pending</div>
+                </div>
+            </div>
+
+            <!-- Instant Search Box & Backup Button -->
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="text" id="mobileSearchInput" class="search-input" style="flex:1;" placeholder="🔍 Search Bike, Name, Phone..." oninput="renderMobileCards()">
+                <button type="button" class="theme-btn" style="white-space:nowrap; padding:10px 14px;" onclick="exportCustomerCSV()" title="Backup Records to CSV">
+                    📥 Backup
+                </button>
+            </div>
+
+            <!-- List of Mobile Cards -->
+            <div id="mobileCardsList">
+                <!-- Dynamically generated mobile cards -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FIXED MOBILE 2-BUTTON BOTTOM BAR -->
+    <nav class="mobile-nav-bar">
+        <button class="nav-button active" id="tabButton1" onclick="switchMobileTab('form')">
+            <span class="icon">➕</span>
+            <span>Enter Details</span>
+        </button>
+        <button class="nav-button" id="tabButton2" onclick="switchMobileTab('records')">
+            <span class="icon">📋</span>
+            <span>View Details</span>
+            <span class="badge" id="mobileBadgeCount">0</span>
+        </button>
+    </nav>
+
+    <!-- Notification Toast -->
+    <div id="mobileToast">Saved successfully</div>
+
+    <!-- MOBILE ADVANCE BOTTOM SHEET MODAL -->
+    <div id="advanceModal" class="modal-overlay hidden" onclick="closeAdvanceModal(event)">
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h3 id="advModalBike" style="font-size:1.15rem; color:var(--text-main); font-family:var(--font-mono); font-weight:800;">AP39 AB 1234</h3>
+                    <p id="advModalCust" style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">Customer</p>
+                </div>
+                <button type="button" class="modal-close" onclick="closeAdvanceModal()">✕</button>
+            </div>
+
+            <div style="margin: 14px 0; background: var(--surface-card); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Total Bill:</span>
+                    <strong id="advModalTotal" style="font-size:0.95rem;">₹0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Current Advance:</span>
+                    <strong id="advModalCurrent" style="font-size:0.95rem;">₹0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Balance Due:</span>
+                    <strong id="advModalBalance" style="font-size:0.95rem;">₹0</strong>
+                </div>
+            </div>
+
+            <input type="hidden" id="advModalRecordId">
+
+            <div class="form-group">
+                <label class="form-label">Enter New Advance Amount (₹)</label>
+                <input type="number" id="advModalInput" class="mobile-input" placeholder="Enter advance received" min="0" inputmode="numeric">
+            </div>
+
+            <!-- Quick Add Chips -->
+            <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                <button type="button" class="btn-crud" onclick="setQuickAdv(100)">+₹100</button>
+                <button type="button" class="btn-crud" onclick="setQuickAdv(200)">+₹200</button>
+                <button type="button" class="btn-crud" onclick="setQuickAdv(500)">+₹500</button>
+                <button type="button" class="btn-crud" onclick="setQuickFullPaid()">Full Paid</button>
+            </div>
+
+            <button type="button" class="btn-full-save" style="margin-top:0;" onclick="saveAdvanceModal()">
+                💾 Save Advance Amount
+            </button>
+        </div>
+    </div>
+
+    <script src="bike_shop.js"></script>
+</body>
+</html>
